@@ -1,5 +1,5 @@
 {
-  "ServiceName": "Amadeus",
-  "ProgramFolder": "D:\\temp\\Amadeus_folder",
-  "SupervisedFolder": "D:\\temp\\Amadeus_folder"
+  "ServiceName": "Example",
+  "ProgramFolder": "C:\\Users\\Yoshi\\Program",
+  "SupervisedFolder": "D:\\Remote\\Program"
 }
