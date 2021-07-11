@@ -6,33 +6,40 @@ using System.Threading;
 
 namespace Updater
 {
-	class Program
-	{/* Workflow
-	  *		Detect files in a certain folder
-	  *		Wait a minute
-	  *		Stop Service (Admin perms required)
-	  *		Copy files to certain directory
-	  *		Start Service
-	  *		Delete Original Files
-	  *		
-	  *	Config File (json)
-	  *		String ServiceName
-	  *		String ProgramFiles
-	  *		String Supervised_Folder
-	  */
+	public class Program
+	{
 		static void Main(string[] args)
+		{
+			Config[] configs = Config.LoadConfig("Config.json"); //Load Configurations
+
+			int monitoredFolders = configs.Length;
+
+			Thread[] threads = new Thread[monitoredFolders];
+			Log($"Updater Inicialized. Monitored programs: \"{monitoredFolders}\"");
+			for (int i = 0; i < monitoredFolders; i++)
+			{
+				threads[i] = new Thread(() => Update(configs[i]));
+				threads[i].Name = configs[i].ServiceName;
+				threads[i].Start();
+				Thread.Sleep(50);
+			}
+			Thread.Sleep(Timeout.Infinite);
+		}
+		/// <summary>
+		/// From a <see cref="Config"/> it auto deploys a program 
+		/// </summary>
+		/// <param name="currentConfig"></param>
+		public static void Update(Config currentConfig)
 		{
 			try
 			{
-				Config currentConfig = Config.LoadConfig("config.json");
-
 				FileSystemWatcher filewatcher = new(currentConfig.SupervisedFolder);
 
 				filewatcher.Filter = "*.exe";
 				filewatcher.Created += Filewatcher_Created;
 				filewatcher.EnableRaisingEvents = true;
 
-				Log($"Updater Inicialized. Current Project [{currentConfig.ServiceName}]");
+				Log($"New monitor: [{currentConfig.ServiceName}]");
 
 				while (true)
 				{
@@ -40,8 +47,8 @@ namespace Updater
 				}
 				void Filewatcher_Created(object sender, FileSystemEventArgs e)
 				{
-					Log($"{e.Name} Detected. Waiting for Changes");
-					Thread.Sleep(15 * 1000);
+					Log($" [{currentConfig.ServiceName}] - {e.Name} Detected. Waiting for Changes");
+					Thread.Sleep(15 * 1000); //15 seg
 
 					using ServiceController serviceController = new(currentConfig.ServiceName);
 					ServiceControllerStatus serviceStatus = serviceController.Status;
@@ -49,38 +56,36 @@ namespace Updater
 					//Paramos el servicio
 					if (serviceStatus == ServiceControllerStatus.Running)
 					{
-						Log($"Stopping \"{currentConfig.ServiceName}\"");
+						Log($" [{currentConfig.ServiceName}] - Stopping \"{currentConfig.ServiceName}\"");
 						serviceController.Stop();
-					} else {
-						Log($"\"{currentConfig.ServiceName}\" is not running");
+					} else
+					{
+						Log($" [{currentConfig.ServiceName}] - \"{currentConfig.ServiceName}\" is not running");
 					}
 
 					//Movemos Archivos
 					try
 					{
-						Log($"Deleting \"{currentConfig.ProgramFolder}\"");
+						Log($" [{currentConfig.ServiceName}] - Deleting \"{currentConfig.ProgramFolder}\"");
 						Thread.Sleep(1 * 1000);
 						EmptyFolder(currentConfig.ProgramFolder);
 
-						Log($"Copying \"{currentConfig.SupervisedFolder}\" to \"{currentConfig.ProgramFolder}\"");
+						Log($" [{currentConfig.ServiceName}] - Copying \"{currentConfig.SupervisedFolder}\" to \"{currentConfig.ProgramFolder}\"");
 						CopyFilesRecursively(currentConfig.SupervisedFolder, currentConfig.ProgramFolder);
 						Thread.Sleep(1 * 1000);
 
-						Log($"Deleting \"{currentConfig.SupervisedFolder}\"");
+						Log($" [{currentConfig.ServiceName}] - Deleting \"{currentConfig.SupervisedFolder}\"");
 						EmptyFolder(currentConfig.SupervisedFolder);
 
-						Log($"Starting \"{currentConfig.ServiceName}\"");
+						Log($" [{currentConfig.ServiceName}] - Starting \"{currentConfig.ServiceName}\"");
 						serviceController.Start();
-						Log($"Service {currentConfig.ServiceName}. Updated Sucessfully");
+						Log($" [{currentConfig.ServiceName}] - Service {currentConfig.ServiceName}. Updated Sucessfully");
 					}
 					catch (Exception ex)
 					{
-						Log($"Exception ocurred while updating" +
+						Log($" [{currentConfig.ServiceName}] - Exception ocurred while updating" +
 						$"\n\t\t{ex.Message}");
 					}
-					
-
-					
 
 					static void EmptyFolder(string path)
 					{
@@ -94,6 +99,7 @@ namespace Updater
 							folder.Delete(true);
 						}
 					}
+
 					static void CopyFilesRecursively(string sourcePath, string targetPath)
 					{
 						//Now Create all of the directories
@@ -113,11 +119,11 @@ namespace Updater
 			catch (Exception e)
 			{
 				Log(e.ToString());
-				Thread.Sleep(15 * 1000);
 			}
 		}
-		
-		public static void Log(string output){
+
+		public static void Log(string output)
+		{
 			Console.WriteLine($"[{DateTime.Now:s}] - {output}");
 		}
 	}

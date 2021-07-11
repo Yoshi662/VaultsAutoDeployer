@@ -1,5 +1,7 @@
-{
-  "ServiceName": "Example",
-  "ProgramFolder": "C:\\Users\\Yoshi\\Program",
-  "SupervisedFolder": "D:\\Remote\\Program"
-}
+[
+  {
+    "ServiceName": "Example",
+    "ProgramFolder": "C:\\Users\\Yoshi\\Program",
+    "SupervisedFolder": "D:\\Remote\\Program"
+  }
+]

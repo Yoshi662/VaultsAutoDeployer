@@ -22,15 +22,14 @@ namespace Updater
 		/// Gets the configuration from a JSON file
 		/// </summary>
 		/// <param name="filepath">The Absolute path to the file</param>
-		public static Config LoadConfig(string filepath)
+		public static Config[] LoadConfig(string filepath)
 		{
 			string rawjson = File.ReadAllText(filepath);
-			Config Config = JsonSerializer.Deserialize<Config>(rawjson);
+			Config[] Config = JsonSerializer.Deserialize<Config[]>(rawjson);
 			return Config;
 		}
 
-
-		public static void SaveConfig(Config config, string filepath){
+		public static void SaveConfig(Config[] config, string filepath){
 			string rawjson = JsonSerializer.Serialize(config);
 			File.WriteAllText(filepath, rawjson);
 		}
