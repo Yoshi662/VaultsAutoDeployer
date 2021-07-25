@@ -2,6 +2,7 @@
   {
     "ServiceName": "Example",
     "ProgramFolder": "C:\\Users\\Yoshi\\Program",
-    "SupervisedFolder": "D:\\Remote\\Program"
+    "SupervisedFolder": "D:\\Remote\\Program",
+    "ProtectedFiles": [ "ExcludedFile.Json", "OtherFile.json" ]
   }
 ]
