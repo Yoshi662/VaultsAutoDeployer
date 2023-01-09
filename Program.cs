@@ -19,9 +19,17 @@ namespace Updater
 				Thread.Sleep(5000);
 				Environment.Exit(0);
 			}
-
-			Config[] configs = Config.LoadConfig("Config.json"); //Load Configurations
-
+			Config[] configs = Array.Empty<Config>();
+			try
+			{
+				 configs = Config.LoadConfig("Config.json"); //Load Configurations
+			}
+			catch 
+			{
+				Console.WriteLine("The configuration file cannot be loaded");
+				Thread.Sleep(5000);
+				Environment.Exit(0);
+			}
 			int monitoredFolders = configs.Length;
 
 			Thread[] threads = new Thread[monitoredFolders];
@@ -63,15 +71,24 @@ namespace Updater
 					using ServiceController serviceController = new(currentConfig.ServiceName);
 					ServiceControllerStatus serviceStatus = serviceController.Status;
 
-
+					//If there is no files on the supervised folder (because we ran it before) it skips the whole processs
+					if (!Directory.EnumerateFiles(currentConfig.SupervisedFolder).Any()){
+						Log(currentConfig, "No files have been detected on the supervised folder. Skipping Update");
+					return;
+					}
+						
 					try
 					{
+
+						
+
 						//Paramos el servicio
 						if (serviceStatus == ServiceControllerStatus.Running)
 						{
 							Log(currentConfig, $"Stopping Service");
 							serviceController.Stop();
-						} else
+						}
+						else
 						{
 							Log(currentConfig, $"Service is not running");
 						}
@@ -88,7 +105,7 @@ namespace Updater
 						Log(currentConfig, $"Deleting \"{currentConfig.SupervisedFolder}\"");
 						EmptyFolder(currentConfig.SupervisedFolder, currentConfig, true);
 
-						Log(currentConfig, $" Starting Service");
+						Log(currentConfig, $"Starting Service");
 						serviceController.Start();
 						Log(currentConfig, $"Service updated sucessfully");
 					}
@@ -106,7 +123,8 @@ namespace Updater
 							if (!config.ProtectedFiles.Contains(Path.GetFileName(file.Name)) || skipProtectedFiles)
 							{
 								file.Delete();
-							} else
+							}
+							else
 							{
 								Log(config, $"Skipped deletion of {Path.GetFileName(file.Name)}.");
 							}
@@ -132,7 +150,9 @@ namespace Updater
 							if (!config.ProtectedFiles.Contains(Path.GetFileName(newPath)))
 							{
 								File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
-							} else {
+							}
+							else
+							{
 								Log(config, $"Skipped protected file {Path.GetFileName(newPath)}.");
 							}
 						}
